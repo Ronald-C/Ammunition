@@ -354,11 +354,12 @@ def usingFile(filename, room_number, day, time):
 
 					print tempLog
 	
-					# Just reserved 12:00 - 12:55. Terminate execution 
-					if time == 0:	
-						print "End of study hours encountered. Terminating . . ."
-						break;
-					
+					# Just reserved 12:00 - 12:55. Terminate execution
+					if '24hr' in globals(): 
+						if time == 0:	
+							print "End of study hours encountered. Terminating . . ."
+							break;
+						
 					else:
 						# Continue reserving room
 						time = time + 1
