@@ -22,6 +22,7 @@ CANCEL_BOOKING_URL = 'http://libonline.sjlibrary.org/public/showCancelBookingSlo
 timeout = 5.0	# Network request timeout
 LIBRARY_ROOM = 22	# 22 == MLK Study Room
 
+
 def login(sessionObj, prev_response, _idNumber, _pinNumber):
 	"""
 	Argument 'prev_response' is the HTML login_page response. Function will POST 
@@ -44,6 +45,7 @@ def login(sessionObj, prev_response, _idNumber, _pinNumber):
 	if loginResponse.status_code != requests.codes.ok:			# ERROR if not 200 response
 		raise Exception("[NETWORK] %s Client Error - Login" % loginResponse.status_code)
 
+
 def selectBuilding(sessionOBJ):
 	"""
 	GET selection page. Payload will contain the building of interest defined by 
@@ -63,6 +65,7 @@ def selectBuilding(sessionOBJ):
 
 	return BeautifulSoup(response.text, 'html.parser')
 	
+
 def selectDate(soup, sessionObj, _idNumber, _day):
 	"""
 	Still on selection page. Function manipulates '_day' to acceptable format 
@@ -115,6 +118,7 @@ def selectDate(soup, sessionObj, _idNumber, _day):
 
 	return BeautifulSoup(response.text, 'html.parser')
 
+
 def selectChooseMyself(soup, sessionObj, _idNumber):
 	"""
 	Still on selection page. Function selects HTML radio button <Let Me Choose Myself>. 
@@ -142,6 +146,7 @@ def selectChooseMyself(soup, sessionObj, _idNumber):
 
 	return BeautifulSoup(response.text, 'html.parser')
 
+
 def gotoTables(soup, sessionObj, _idNumber):
 	"""
 	All parameters were sent. GET the time-tables that indicate free slots.
@@ -166,6 +171,7 @@ def gotoTables(soup, sessionObj, _idNumber):
 		raise Exception("[NETWORK] %s Client Error - GOTO tables" % response.status_code)
 
 	return BeautifulSoup(response.text, 'html.parser')
+
 
 def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 	"""
@@ -225,7 +231,8 @@ def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 
 	return False	
 
-def verifyBooking(sessionObj):
+
+def verifyBooking(sessionObj, targetRoomNumber):
 	"""
 	GET 'CANCEL_BOOKING_URL' and verify target room is there
 	"""
@@ -233,11 +240,13 @@ def verifyBooking(sessionObj):
 	if response.status_code != requests.codes.ok:			# ERROR if not 200 response
 		raise Exception("[NETWORK] %s Client Error - Building selection" % response.status_code)
 
-	soup = BeautifulSoup(response.text, 'html.parser')
-
-	# Find cancel booking table; Existance == success ???	<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-	if soup.find('table', id='ctl00_ContentPlaceHolder1_gvbookingInfor'):
-		return True
+	else:
+		soup = BeautifulSoup(response.text, 'html.parser')
+		reservation = soup.find('table', id='ctl00_ContentPlaceHolder1_gvbookingInfor').tr.nextSibling
+		
+		target = reservation.contents[3]
+		if str(target).find("Room " + targetRoomNumber):
+			return True
 
 	return False
 
@@ -270,12 +279,17 @@ def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 		status = bookRoom(soup4, r, _idNumber, _room_number, _timeStart, _timeEnd)
 
 		if status:
-			return verifyBooking(r)
+			return verifyBooking(r, _room_number)
 
-		return False
+	return False
+
 
 def isValid(line):
+	"""
+	Verify argument only contains numbers
+	"""
 	return line.replace(' ', '').isdigit()
+
 
 def nonblank_lines(file):
 	"""
@@ -287,6 +301,7 @@ def nonblank_lines(file):
 			yield line
 		else:
 			print "[Warning] Empty entry found"
+
 
 def usingFile(filename, room_number, day, time):
 	"""
@@ -315,8 +330,10 @@ def usingFile(filename, room_number, day, time):
 		### If successful reservation, and not last reservation, increment time for next user in file. If not 
 		### successful, this means id/pin was invalid - log this information to file and stdout
 
-		with open(filename, 'rw+') as file:	
-			for line in nonblank_lines(file):
+		dataLog = []
+
+		with open(filename, 'r') as rfile:	
+			for line in nonblank_lines(rfile):
 
 				idNumber, pinNumber = [ entry for entry in line.split() ]
 				timeStart = HOURS[time]
@@ -332,7 +349,10 @@ def usingFile(filename, room_number, day, time):
 
 				# Register user
 				if attack(idNumber, pinNumber, room_number, day, timeStart, timeEnd):
-					print ">>> [REGISTERED] %s %s @ %s | %s - %s" % (idNumber, pinNumber, day_formatted, timeStart, timeEnd)
+					tempLog = ">>> [REGISTERED] %s %s @ %s | %s - %s" % (idNumber, pinNumber, day_formatted, timeStart, timeEnd)
+					dataLog.append(tempLog)
+
+					print tempLog
 	
 					# Just reserved 12:00 - 12:55. Terminate execution 
 					if time == 0:	
@@ -344,12 +364,19 @@ def usingFile(filename, room_number, day, time):
 						time = time + 1
 				
 				else:
-					print "[WARNING] %s is invalid " % idNumber
-					# Unable to log in
-					# TODO:
-					#	- Overwrite file entries; log it
+					tempLog = "[WARNING] %s is invalid " % idNumber
+					dataLog.append(tempLog)
 
-			file.close()
+					print tempLog
+
+			rfile.close()
+
+		# Log execution to filesystem
+		with open("log", 'w') as wFile:
+			for entry in dataLog:
+				wFile.write(entry + '\n')
+
+			wFile.close()
 
 	except requests.Timeout as e:
 		print "[NETWORK] Request timeout @ %s" % LOGIN_URL
