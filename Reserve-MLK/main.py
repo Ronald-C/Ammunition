@@ -27,17 +27,16 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--day', help="day to book1 in this yyyymmdd format", nargs='?', default=get_date())
 	parser.add_argument('-t', '--time', help="Starting time (int)[0-23]", nargs='?', default=get_time())
 
-	if len(sys.argv) < 3:
+	if len(sys.argv) < 3:			# Valid number arguments?
 		parser.print_help()
 		sys.exit(1)
 
-	args = parser.parse_args()
+	args = parser.parse_args()		# Parse input arguments
 
-	if args.all:
-		globals()['24hr'] = args.all
+	globals()['24hr'] = args.all	# Set global variable
 
 	if args.file and args.room and args.time:
-		Attacker.usingFile( args.file[0], args.room[0], args.day, args.time )
+		Attacker.usingFile( args.file, args.room, args.day, args.time )
 	else:
 		parser.print_help()
 		sys.exit(1)

@@ -332,7 +332,8 @@ def usingFile(filename, room_number, day, time):
 
 		dataLog = []
 
-		with open(filename, 'r') as rfile:	
+		with open(filename, 'r+') as rfile:
+
 			for line in nonblank_lines(rfile):
 
 				idNumber, pinNumber = [ entry for entry in line.split() ]
@@ -346,7 +347,6 @@ def usingFile(filename, room_number, day, time):
 
 				else:
 					timeEnd = HOURS[time + 1]
-
 				# Register user
 				if attack(idNumber, pinNumber, room_number, day, timeStart, timeEnd):
 					tempLog = ">>> [REGISTERED] %s %s @ %s | %s - %s" % (idNumber, pinNumber, day_formatted, timeStart, timeEnd)
@@ -355,7 +355,7 @@ def usingFile(filename, room_number, day, time):
 					print tempLog
 	
 					# Just reserved 12:00 - 12:55. Terminate execution
-					if '24hr' in globals(): 
+					if '24hr' not in globals():
 						if time == 0:	
 							print "End of study hours encountered. Terminating . . ."
 							break;
