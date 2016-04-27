@@ -17,6 +17,7 @@ LOGIN_URL = 'http://libonline.sjlibrary.org/public/login.aspx'
 BRANCH_URL = 'http://libonline.sjlibrary.org/public/searchoptions.aspx?branchid='
 SELECT_TYPE_URL = 'http://libonline.sjlibrary.org/public/searchbyMachineTypes.aspx'
 TIME_SLOTS_URL = 'http://libonline.sjlibrary.org/public/searchByMTListing.aspx'
+CANCEL_BOOKING_URL = 'http://libonline.sjlibrary.org/public/showCancelBookingSlots.aspx'
 
 timeout = 5.0	# Network request timeout
 LIBRARY_ROOM = 22	# 22 == MLK Study Room
@@ -224,6 +225,23 @@ def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 
 	return False	
 
+def verifyBooking(sessionObj):
+	"""
+	GET 'CANCEL_BOOKING_URL' and verify target room is there
+	"""
+	response = sessionObj.get(CANCEL_BOOKING_URL, cookies=sessionObj.cookies)
+	if response.status_code != requests.codes.ok:			# ERROR if not 200 response
+		raise Exception("[NETWORK] %s Client Error - Building selection" % response.status_code)
+
+	soup = BeautifulSoup(response.text, 'html.parser')
+
+	# Find cancel booking table; Existance == success ???	<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+	if soup.find('table', id='ctl00_ContentPlaceHolder1_gvbookingInfor'):
+		return True
+
+	return False
+
+
 def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 	"""
 	Open request session and access URL
@@ -251,7 +269,10 @@ def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 		################ BOOK IT!!! ################
 		status = bookRoom(soup4, r, _idNumber, _room_number, _timeStart, _timeEnd)
 
-		return status
+		if status:
+			return verifyBooking(r)
+
+		return False
 
 def isValid(line):
 	return line.replace(' ', '').isdigit()
