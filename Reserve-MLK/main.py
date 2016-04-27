@@ -15,7 +15,8 @@ def get_time():
 	Get current time hour + 1
 	"""
 	hour = str(datetime.now()).split()[1].replace(':', '')[:2]
-	return str(int(hour) + 1)
+	
+	return str(int(hour) + 1)	# Round up to next hour
 
 if __name__ == '__main__':
 	parser =  argparse.ArgumentParser()
@@ -30,15 +31,6 @@ if __name__ == '__main__':
 		sys.exit(1)
 
 	args = parser.parse_args()
-	
-	if int(args.time) < 0 or int(args.time) > 23:
-		print 'Time must be between 0 and 23 (inclusive)'
-		sys.exit(2)		
-
-	if len(args.day) != 8:
-		print 'Argument day (-d) must be in yyyymmdd format'
-		sys.exit(2)
-
 
 	if args.file and args.room and args.time:
 		Attacker.usingFile( args.file[0], args.room[0], args.day, args.time )
