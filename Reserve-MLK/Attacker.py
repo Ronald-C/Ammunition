@@ -303,7 +303,7 @@ def nonblank_lines(file):
 			print "[Warning] Empty entry found"
 
 
-def usingFile(filename, room_number, day, time):
+def begin(filename, room_number, day, time):
 	"""
 	Loop through entries and attack
 	"""
@@ -381,7 +381,7 @@ def usingFile(filename, room_number, day, time):
 
 	except requests.Timeout as e:
 		print "[NETWORK] Request timeout @ %s" % LOGIN_URL
-		sys.exit(2)
+		sys.exit(3)
 
 	except Exception as e:
 		print e

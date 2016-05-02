@@ -1,8 +1,8 @@
+#!/usr/bin/env python
+
 from datetime import datetime
 import argparse
 import sys
-
-import Attacker
 
 def get_date():
 	"""
@@ -21,11 +21,12 @@ def get_time():
 if __name__ == '__main__':
 	parser =  argparse.ArgumentParser(description="Dont waste time reserving study rooms again!!!")
 
-	parser.add_argument('file', help="input file of ID PIN")
-	parser.add_argument('room', help="room number")
-	parser.add_argument('-a', '--all', help="24 hour mode", action='store_true')
-	parser.add_argument('-d', '--day', help="day to book1 in this yyyymmdd format", nargs=1, default=get_date())
-	parser.add_argument('-t', '--time', help="Starting time (int)[0-23]", nargs=1, default=get_time())
+	parser.add_argument('filename', help="Input text file of ID PIN")
+	parser.add_argument('-r', '--room', help="Room number", nargs='?')
+	parser.add_argument('-d', '--day', help="Day to book in this yyyymmdd format", nargs='?', default=get_date())
+	parser.add_argument('-t', '--time', help="Starting time (int)[0-23]", nargs='?', default=get_time())
+	parser.add_argument('-a', '--all', help="Set to 24 hour mode", action='store_true')
+	parser.add_argument('-q', '--query', help="Set to query only", action='store_true')
 
 	if len(sys.argv) < 3:			# Valid number arguments?
 		parser.print_help()
@@ -33,16 +34,20 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()		# Parse input arguments
 
+	if args.query:
+		import Querier
+		Querier.query_list(args.filename, args.room)
+
+		sys.exit(0)
+
+	###########################
+
 	globals()['24hr'] = args.all	# Set global variable
 
-	if isinstance(args.time, list):		# optional args == list() unlike default
-		args.time = args.time[0]
-
-	if isinstance(args.day, list):
-		args.day = args.day[0]
-
-	if args.file and args.room and args.time:
-		Attacker.usingFile( args.file, args.room, args.day, args.time )
+	if args.filename and args.room and args.time:
+		import Attacker
+		Attacker.begin( args.filename, args.room, args.day, args.time )
+	
 	else:
 		parser.print_help()
 		sys.exit(1)
