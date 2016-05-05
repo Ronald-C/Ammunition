@@ -4,11 +4,19 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, date
+from os import path
 import sys
 import re
 
-HEADERS = { 'User-agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36', 
-	'Content-Type': 'application/x-www-form-urlencoded', 'Upgrade-Insecure-Requests': 1, 'Referer': 'http://libonline.sjlibrary.org/public/login.aspx', 'Connection':'keep-alive' }
+dirPath = path.dirname(path.abspath(__file__))
+rootPath = path.join(dirPath, '..') 
+sys.path.insert(0, rootPath)		# Include parent dir for global files
+
+import UserAgent
+
+
+HEADERS = { 'User-agent' : '', 'Content-Type': 'application/x-www-form-urlencoded', 'Upgrade-Insecure-Requests': 1, 
+	'Referer': 'http://libonline.sjlibrary.org/public/login.aspx', 'Connection':'keep-alive' }
 
 HOURS = ['0000', '0100', '0200', '0300', '0400', '0500', '0600', '0700', '0800', '0900', '1000', '1100', 
 	'1200', '1300', '1400', '1500', '1600', '1700', '1800', '1900', '2000', '2100', '2200', '2300']
@@ -45,7 +53,6 @@ def login(sessionObj, prev_response, _idNumber, _pinNumber):
 	if loginResponse.status_code != requests.codes.ok:			# ERROR if not 200 response
 		raise Exception("[NETWORK] %s Client Error - Login" % loginResponse.status_code)
 
-
 def selectBuilding(sessionOBJ):
 	"""
 	GET selection page. Payload will contain the building of interest defined by 
@@ -65,7 +72,6 @@ def selectBuilding(sessionOBJ):
 
 	return BeautifulSoup(response.text, 'html.parser')
 	
-
 def selectDate(soup, sessionObj, _idNumber, _day):
 	"""
 	Still on selection page. Function manipulates '_day' to acceptable format 
@@ -118,7 +124,6 @@ def selectDate(soup, sessionObj, _idNumber, _day):
 
 	return BeautifulSoup(response.text, 'html.parser')
 
-
 def selectChooseMyself(soup, sessionObj, _idNumber):
 	"""
 	Still on selection page. Function selects HTML radio button <Let Me Choose Myself>. 
@@ -146,7 +151,6 @@ def selectChooseMyself(soup, sessionObj, _idNumber):
 
 	return BeautifulSoup(response.text, 'html.parser')
 
-
 def gotoTables(soup, sessionObj, _idNumber):
 	"""
 	All parameters were sent. GET the time-tables that indicate free slots.
@@ -171,7 +175,6 @@ def gotoTables(soup, sessionObj, _idNumber):
 		raise Exception("[NETWORK] %s Client Error - GOTO tables" % response.status_code)
 
 	return BeautifulSoup(response.text, 'html.parser')
-
 
 def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 	"""
@@ -231,7 +234,6 @@ def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 
 	return False	
 
-
 def verifyBooking(sessionObj, targetRoomNumber):
 	"""
 	GET 'CANCEL_BOOKING_URL' and verify target room is there
@@ -249,7 +251,6 @@ def verifyBooking(sessionObj, targetRoomNumber):
 			return True
 
 	return False
-
 
 def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 	"""
@@ -283,13 +284,11 @@ def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 
 	return False
 
-
 def isValid(line):
 	"""
 	Verify argument only contains numbers
 	"""
 	return line.replace(' ', '').isdigit()
-
 
 def nonblank_lines(file):
 	"""
@@ -301,7 +300,6 @@ def nonblank_lines(file):
 			yield line
 		else:
 			print "[Warning] Empty entry found"
-
 
 def begin(filename, room_number, day, time):
 	"""
@@ -333,6 +331,9 @@ def begin(filename, room_number, day, time):
 		dataLog = []
 
 		with open(filename, 'r+') as rfile:
+
+			# Load a random user agent
+			HEADERS['User-agent'] = LoadUserAgent()
 
 			for line in nonblank_lines(rfile):
 
