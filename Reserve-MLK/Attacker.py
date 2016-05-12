@@ -12,7 +12,7 @@ dirPath = path.dirname(path.abspath(__file__))
 rootPath = path.join(dirPath, '..') 
 sys.path.insert(0, rootPath)		# Include parent dir for global files
 
-import UserAgent
+from UserAgent import LoadUserAgent
 
 
 HEADERS = { 'User-agent' : '', 'Content-Type': 'application/x-www-form-urlencoded', 'Upgrade-Insecure-Requests': 1, 
@@ -29,7 +29,9 @@ CANCEL_BOOKING_URL = 'http://libonline.sjlibrary.org/public/showCancelBookingSlo
 
 timeout = 5.0	# Network request timeout
 LIBRARY_ROOM = 22	# 22 == MLK Study Room
-
+PROXIES = {
+	'http': '123.1.172.44:80'
+}
 
 def login(sessionObj, prev_response, _idNumber, _pinNumber):
 	"""

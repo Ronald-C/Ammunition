@@ -84,7 +84,11 @@ def query_list(_filename, _room_number=None):
 				browser.open(LOGIN_URL)
 				assert browser.viewing_html()		# HTML ???
 
+				lineNumber = 0
+
 				for line in rFile:
+					++lineNumber
+
 					validEntry = isValid(line) 		# Confirm that file entry is valid
 
 					try:
@@ -114,7 +118,7 @@ def query_list(_filename, _room_number=None):
 								raise Exception("[ERROR] Status code %s" % responseCode)
 
 						else:
-							print "[WARNING] ID/PIN does not meet expected requirements"
+							print "[WARNING] Line %s : ID/PIN does not meet expected requirements" % lineNumber
 						
 					except Exception as e:
 						print e
