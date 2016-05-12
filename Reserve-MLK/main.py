@@ -22,7 +22,7 @@ if __name__ == '__main__':
 	parser =  argparse.ArgumentParser(description="Dont waste time reserving study rooms again!!!")
 
 	parser.add_argument('filename', help="Input text file of ID PIN")
-	parser.add_argument('-r', '--room', help="Room number", nargs='?')
+	parser.add_argument('-r', '--room', help="Room number", nargs='?', required=True)
 	parser.add_argument('-d', '--day', help="Day to book in this yyyymmdd format", nargs='?', default=get_date())
 	parser.add_argument('-t', '--time', help="Starting time (int)[0-23]", nargs='?', default=get_time())
 	parser.add_argument('-a', '--all', help="Set to 24 hour mode", action='store_true')

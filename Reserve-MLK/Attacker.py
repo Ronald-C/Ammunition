@@ -29,9 +29,6 @@ CANCEL_BOOKING_URL = 'http://libonline.sjlibrary.org/public/showCancelBookingSlo
 
 timeout = 5.0	# Network request timeout
 LIBRARY_ROOM = 22	# 22 == MLK Study Room
-PROXIES = {
-	'http': '123.1.172.44:80'
-}
 
 def login(sessionObj, prev_response, _idNumber, _pinNumber):
 	"""
@@ -87,36 +84,41 @@ def selectDate(soup, sessionObj, _idNumber, _day):
  									
 	startDate = str(today).replace('-', '.')				# Get beginning of week (Monday)
 
-	endDate = today + timedelta(days=5)						# Expected in form-data, today + 5_days
+	endDate = today + timedelta(days=4)						# Expected in form-data, today + 4_days
 	endDate = str(endDate).replace('-', '.')				# Get date in a week
 
 	if ( int(startDate.replace('.', '')) > int(_day) ) or ( int(_day) > int(endDate.replace('.', '')) ):
 		raise Exception("[PARAMETER] Day specified out of range")
 	
 	else:
+		# If today != _day; use specified _day as start of table listing
+		if int(startDate.replace('.', '')) != int(_day):
+			startDate = _day[:4] + '.' + _day[4:6] + '.' + _day[6:]
+
 		startDate = startDate[:5] + startDate[5:].replace('0', '')			# Remove leading 0s
 		
-		endDate = endDate[:6] + str(int(endDate[6]) - 1) + endDate[7:]		# endDate = Month - 1
+		endDate = endDate[:8] + '01'
 		endDate = endDate[:5] + endDate[5:].replace('0', '')				# Remove leading 0s
 
 		targetDate = startDate + ';' + endDate
-
+		
 	# Gather hidden variables for reservation selection
 	viewState = soup.find('input', attrs={ 'name': '__VIEWSTATE' }).get('value')
 	viewStateGen = soup.find('input', attrs={ 'name': '__VIEWSTATEGENERATOR' }).get('value')
 	eventValidation = soup.find('input', attrs={ 'name': '__EVENTVALIDATION' }).get('value')
 
-	payload = {'h_ctl00_ContentPlaceHolder1_calSrcDate': targetDate, '__EVENTTARGET': 'ctl00$ContentPlaceHolder1$calSrcDate', '__EVENTARGUMENT': '', '__LASTFOCUS': '',
-		'ctl00$hidCardno': _idNumber, 'ctl00$hidGoogleMapKey': 'ABQIAAAAJKUVL-MrwDN5PN4e9ptZlRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxTptz2NMSRojYVwzZ2DgnujQSVluA',
+	payload = {'h_ctl00_ContentPlaceHolder1_calSrcDate': targetDate, '__EVENTTARGET': 'ctl00$ContentPlaceHolder1$calSrcDate',
+		'__EVENTARGUMENT': '', '__LASTFOCUS': '', '__VIEWSTATE': viewState, '__VIEWSTATEGENERATOR': viewStateGen, '__VIEWSTATEENCRYPTED': '',
+		'__EVENTVALIDATION': eventValidation, 'ctl00$hidCardno': _idNumber, 'ctl00$hidGoogleMapKey': 'ABQIAAAAJKUVL-MrwDN5PN4e9ptZlRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxTptz2NMSRojYVwzZ2DgnujQSVluA',
 		'ctl00$hidGoogleMapZoomLevel': '12', 'ctl00$hidGoogleMapLat': '49.244654', 'ctl00$hidGoogleMapLng': '-122.970657', 'ctl00$hidEnableGoogeMapScript': 'x',
-		'ctl00$ContentPlaceHolder1$resNextAvail': 'rdoResrvNextAvail_No', 'ctl00$ContentPlaceHolder1$gvPCTypes$ctl01$Item_HeaderLevelCheckBox': 'on',
-		'ctl00$ContentPlaceHolder1$gvPCTypes$ctl02$Item_RowLevelCheckBox': 'on', 'ctl00$ContentPlaceHolder1$ddlApproxStartTime': '', 
+		'ctl00$ContentPlaceHolder1$resNextAvail': 'rdoResrvNextAvail_Yes', 'ctl00$ContentPlaceHolder1$gvPCTypes$ctl01$Item_HeaderLevelCheckBox': 'on',
+		'ctl00$ContentPlaceHolder1$gvPCTypes$ctl02$Item_RowLevelCheckBox': 'on', 'ctl00$ContentPlaceHolder1$ddlApproxStartTime': '',
 		'ctl00$ContentPlaceHolder1$ddlNextAvailOrderBy': 'StartTime', 'ctl00$ContentPlaceHolder1$ddlMinSlotLengthHour': '0', 
-		'ctl00$ContentPlaceHolder1$ddlMinSlotLengthMinute': '0', 'ctl00$ContentPlaceHolder1$ddlMaxSlotLengthHour': '0', 
-		'ctl00$ContentPlaceHolder1$ddlMaxSlotLengthMinute': '0', 'ctl00$ContentPlaceHolder1$ddlNumHoursToSearch': '', 
-		'ctl00$ContentPlaceHolder1$ddlDisplayResultBy': 'pcName', 'ctl00$ContentPlaceHolder1$hidFirstTimeLoad_CheckAllTypes': '0', 
-		'__VIEWSTATE': viewState, '__VIEWSTATEGENERATOR': viewStateGen, '__EVENTVALIDATION': eventValidation, '__VIEWSTATEENCRYPTED': '' 
+		'ctl00$ContentPlaceHolder1$ddlMinSlotLengthMinute': '0', 'ctl00$ContentPlaceHolder1$ddlMaxSlotLengthHour': '0',
+		'ctl00$ContentPlaceHolder1$ddlMaxSlotLengthMinute': '0', 'ctl00$ContentPlaceHolder1$ddlNumHoursToSearch': '',
+		'ctl00$ContentPlaceHolder1$ddlDisplayResultBy': 'pcName', 'ctl00$ContentPlaceHolder1$hidFirstTimeLoad_CheckAllTypes': '0'
 		}
+
 
 	HEADERS['Referer'] = SELECT_TYPE_URL 	# Where we are from
 
@@ -236,6 +238,31 @@ def bookRoom(soup, sessionObj, _idNumber, _room_number, _timeStart, _timeEnd):
 
 	return False	
 
+def goTomorrow(soup, sessionObj, idNum):
+	"""
+	Navigate to the correct date for reservation.
+	"""
+
+	viewState = soup.find('input', attrs={ 'name': '__VIEWSTATE' }).get('value')
+	viewStateGen = soup.find('input', attrs={ 'name': '__VIEWSTATEGENERATOR' }).get('value')
+	eventValidation = soup.find('input', attrs={ 'name': '__EVENTVALIDATION' }).get('value')
+
+	HEADERS['Referer'] = TIME_SLOTS_URL
+
+	package = {
+		'__VIEWSTATE': viewState, '__VIEWSTATEGENERATOR': viewStateGen, '__EVENTVALIDATION': eventValidation, 'ctl00$hidCardno': idNum,
+		'ctl00$hidGoogleMapKey': 'ABQIAAAAJKUVL-MrwDN5PN4e9ptZlRT2yXp_ZAY8_ufC3CFXhHIE1NvwkxTptz2NMSRojYVwzZ2DgnujQSVluA', 'ctl00$hidGoogleMapZoomLevel': '12',
+		'ctl00$hidGoogleMapLat': '49.244654', 'ctl00$hidGoogleMapLng': '-122.970657', 'ctl00$hidEnableGoogeMapScript': 'x',
+		'ctl00$ContentPlaceHolder1$btnNextDay': 'Next Day >>', 'ctl00$ContentPlaceHolder1$hidClickedLinkButtonValue': '', 
+		'ctl00$ContentPlaceHolder1$hid_PoolMachineDisplayName': 'To be determined'
+		}
+
+	response = sessionObj.post(TIME_SLOTS_URL, data=package, headers=HEADERS, cookies=sessionObj.cookies)
+	if response.status_code != requests.codes.ok:				# ERROR if not 200 response
+		raise Exception("[NETWORK] %s Client Error - Next Day" % response.status_code)
+
+	return BeautifulSoup(response.text, 'html.parser')
+
 def verifyBooking(sessionObj, targetRoomNumber):
 	"""
 	GET 'CANCEL_BOOKING_URL' and verify target room is there
@@ -277,6 +304,12 @@ def attack(_idNumber, _pinNumber, _room_number, _day, _timeStart, _timeEnd):
 
 		################ GOTO Computer/Room Time Slots PAGE ################
 		soup4 = gotoTables(soup3, r, _idNumber)
+
+		# Navigate to correct date(page) of interest
+		clickNext = int(_day) - int(str(date.today()).replace('-', ''))
+		while(clickNext):
+			soup4 = goTomorrow(soup4, r, _idNumber)		# Next page/day
+			clickNext = clickNext - 1
 
 		################ BOOK IT!!! ################
 		status = bookRoom(soup4, r, _idNumber, _room_number, _timeStart, _timeEnd)
