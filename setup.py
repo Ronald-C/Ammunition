@@ -32,6 +32,10 @@ setup(
 	packages=find_packages(exclude=['roomGrab.test']),
 	install_requires=['requests', 'beautifulsoup4'],
 
+	package_data={
+		'roomGrab.conf': ['*.txt']
+	}
+
 	entry_points={
 		'console_scripts': [
 			'attack=roomGrab:main'
