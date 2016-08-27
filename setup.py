@@ -18,7 +18,6 @@ try:
 except Exception:
 	long_description = ''
 
-
 setup(
 	name='roomGrab',
 	version='2.0.0',
@@ -30,12 +29,12 @@ setup(
 
 	license='MIT',
 
-	packages=find_packages(exclude=[Automation.test]),
-	install_requires=['requires', 'bs4'],
-	entry_points={
-		'console_scripts' : [
-			'app'='Automation:main'
-		]
-	},
+	packages=find_packages(exclude=['roomGrab.test']),
+	install_requires=['requests', 'beautifulsoup4'],
 
+	entry_points={
+		'console_scripts': [
+			'attack=roomGrab:main'
+		]
+	}
 )
