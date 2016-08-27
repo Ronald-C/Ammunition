@@ -1,6 +1,5 @@
-class PackOne:
-    def __init__(self):
-        self.name = 'PackOne'
+def singular():
+	print 'pass'
 
-    def do(self):
-        return 'My name is {}'.format(self.name)
+def batch(filename):
+	print 'batch update'

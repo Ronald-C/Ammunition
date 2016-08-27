@@ -19,26 +19,26 @@ except Exception:
 	long_description = ''
 
 setup(
-	name='roomGrab',
-	version='2.0.0',
-	description=long_description,
-	url='',
+	name = 'roomGrab',
+	version = '2.0.0',
+	description = long_description,
+	url = '',
 	
-	author='Ronald',
-	author_email='',
+	author = 'Ronald',
+	author_email = '',
 
-	license='MIT',
+	license = 'MIT',
 
-	packages=find_packages(exclude=['roomGrab.test']),
-	install_requires=['requests', 'beautifulsoup4'],
+	packages = find_packages(exclude = ['roomGrab.test']),
+	install_requires = ['requests', 'beautifulsoup4'],
 
-	package_data={
+	package_data = {
 		'roomGrab.conf': ['*.txt']
-	}
+	},
 
-	entry_points={
+	entry_points = {
 		'console_scripts': [
 			'attack=roomGrab:main'
 		]
-	}
+	},
 )
